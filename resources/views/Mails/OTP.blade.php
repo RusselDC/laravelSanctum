@@ -13,7 +13,7 @@
                 <tr>
                     <td align="center" valign="middle">
                         <center>
-                            <img src="https://hcommons.org/app/uploads/sites/1002840/2022/07/45_big-removebg-preview-300x296.png" alt="" width="15%" height="15%" style="transition: all ease .3s; margin-bottom: 5vh; height: 100%; width 100%">
+                            <img src="https://hcommons.org/app/uploads/sites/1002840/2022/07/45_big-removebg-preview-300x296.png" alt="" width="15%" height="15%" style="transition: all ease .3s; margin-bottom: 5vh; height: 100%; width: 100%;">
                         </center>
                         <span style="height: 5vh; font-size: 3.5vh; font-weight: 600;">Here is your One-Time Password (OTP)</span><br>
                         <span style="height: 6vh; font-size: 2.5vh;">to register your account</span><br><br>
