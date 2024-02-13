@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -12,6 +13,9 @@ use App\Models\OTP;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OTPmail;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use App\Mail\resetMail;
+use Illuminate\Support\Facades\DB;
 class AuthController extends Controller
 {
 
@@ -39,8 +43,12 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
 
         if (Auth::attempt($credentials)) {
-            $user = User::where('email', $request->email)->firstOrFail();
-            $token = $user->createToken('auth-token')->plainTextToken;
+            $user = Auth::user();
+            $token = $user->createToken('auth-token');
+            $token->accessToken->expires_at = now()->addHour();
+
+
+
 
             return response()->json(['token' => $token]);
         }
@@ -78,7 +86,8 @@ class AuthController extends Controller
             return response()->json(
                 [
                     'status'=>402,
-                    'data'=>'please check your inserted datas'
+                    'data'=>'please check your inserted datas',
+                    'datas'=>$validate->messages()
                 ],402
             );
         }else{
@@ -127,7 +136,8 @@ class AuthController extends Controller
             return response()->json(
                 [
                     'status'=>402,
-                    'messaage'=>'please check your inputs'
+                    'message'=>'please check your inputs',
+                    'data'=>$validate->messages()
                 ],402
             );
         }
@@ -169,5 +179,89 @@ class AuthController extends Controller
                 'status'=>401
             ],401);
         }
+    }
+
+    public function reset(Request $req)
+    {
+        $validate = Validator::make($req->all(),[
+            'email'=>'required|string|'
+        ]);
+
+
+
+        if($validate->fails())
+        {
+            return response()->json(
+                [
+                    'status'=>422,
+                    'message'=>'Please check your inputs'
+                ],422
+            );
+        }
+
+        $url = 'http://127.0.0.1:5500/verifyReset.html?token=';
+        $token = Str::random(64);
+
+        DB::table('password_reset_tokens')->insert(
+            [
+                'email'=>$req->email,
+                'token'=>$token,
+                'created_at'=>Carbon::now()
+            ]
+        );
+
+
+
+
+
+        Mail::to($req->email)->send(new resetMail($url.$token));
+
+        return response()->json([
+            'status'=>200,
+            'message'=>'Please check your email for the link'
+        ],200);
+    }
+
+    public function resetpassword(Request $request)
+    {
+        $validate = Validator::make($request->all(),[
+            'token'=>'string|required',
+            'password'=>'string|required|min:8|max:20|confirmed',
+            'password_confirmation'=>'string|required|min:8|max:20'
+        ]);
+
+        if($validate->fails()){
+            response()->json([
+                'status'=>422,
+                'message'=>'Check your inputs'
+            ],422);
+        }
+
+        $passwordResetToken = DB::table('password_reset_tokens')
+            ->where('token', $request->token)
+            ->where('used', false)
+            ->first();
+
+        if($passwordResetToken)
+        {
+            DB::table('password_reset_tokens')
+                ->where('token', $request->token)
+                ->update(['used' => true]);
+
+            $user = User::where('email',$passwordResetToken->email)->first();
+            $user->password = Hash::make($request->password);
+            $user->save();
+
+            return response()->json(
+                [
+                    'status'=>200,
+                    'message'=>'Password has been changed'
+                ],200
+            );
+        }
+        return response()->json([
+            'status'=>401,
+            'message'=>'INVALID TOKEN',
+        ],401);
     }
 }

@@ -15,10 +15,12 @@ use App\Http\Controllers\Api\AuthController;
 |
 */
 
-Route::middleware('auth:sanctum')->get('user',[AuthController::class,'profile']);
-Route::middleware('auth:sanctum')->get('logout',[AuthController::class,'logout']);
-Route::middleware('auth:sanctum')->get('checkAuth',[AuthController::class,'checkAuth']);
+Route::middleware(['auth:sanctum','tokenExpiration'])->get('user',[AuthController::class,'profile']);
+Route::middleware(['auth:sanctum','tokenExpiration'])->get('logout',[AuthController::class,'logout']);
+Route::middleware(['auth:sanctum','tokenExpiration'])->get('checkAuth',[AuthController::class,'checkAuth']);
 
 Route::post('login',[AuthController::class,'login']);
 Route::post('register',[AuthController::class,'register']);
 Route::post('verify',[AuthController::class,'verify']);
+Route::post('reset',[AuthController::class,'reset']);
+Route::post('resetpassword',[AuthController::class,'resetpassword']);
